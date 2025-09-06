@@ -47,6 +47,6 @@ jobs:
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         run: |
           aws lambda update-function-code \
-            --function-name S3NewCSVSchemaCheckFunction \
+            --function-name schema_check_lambda_function \
             --region $AWS_REGION \
-            --zip-file fileb://function.zip
+            --zip-file fileb://function.zip 
