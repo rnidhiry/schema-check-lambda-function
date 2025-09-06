@@ -1,0 +1,52 @@
+name: Deploy to AWS Lambda
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.6.16"
+      
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run Black
+        run: uv run black .
+
+      - name: Install AWS CLI
+        run: |
+          pip install awscli          
+
+      - name: Package Lambda
+        run: |
+          cd src
+          zip -r ../function.zip schema_check_lambda_function/
+
+      - name: Deploy to Lambda
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+        run: |
+          aws lambda update-function-code \
+            --function-name S3NewCSVSchemaCheckFunction \
+            --region $AWS_REGION \
+            --zip-file fileb://function.zip
